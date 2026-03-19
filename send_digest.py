@@ -25,34 +25,30 @@ def generate_digest():
     client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
     today = date.today().strftime("%B %d, %Y")
 
-    prompt = f"""Today is {today}. Search the web for the latest fundraising news and compile a daily digest email.
+    prompt = f"""Today is {today}. Search the web and find 4-5 recent fundraising news items.
 
 Focus areas:
 {FOCUS_AREAS}
 
-Format your response as:
-SUBJECT: <email subject line>
+Write a short HTML email with:
+- A heading showing the date
+- 4-5 news items, each with a bold title and 1 sentence summary
+- Simple inline CSS (font-family: Arial; max-width: 600px; margin: auto)
+
+Format as:
+SUBJECT: Daily Fundraising Digest - {today}
 ---
-<HTML email body>
-
-The HTML body should:
-- Have a clean header with the date
-- List 5-8 news items, each with: bold title, 2-sentence summary, funding amount if mentioned, and a source link
-- Use simple inline CSS (font-family: Arial; max-width: 600px; margin: auto)
-- End with a short footer
-
-Be factual, concise, and only include items published in the last 48 hours."""
+<html content here>"""
 
     response = client.messages.create(
         model="claude-sonnet-4-20250514",
-        max_tokens=2000,
-        tools=[{"type": "web_search_20250305", "name": "web_search"}],
+        max_tokens=1024,
         messages=[{"role": "user", "content": prompt}]
     )
 
     full_text = ""
     for block in response.content:
-        if block.type == "text":
+        if hasattr(block, "text"):
             full_text += block.text
 
     if "SUBJECT:" in full_text and "---" in full_text:
